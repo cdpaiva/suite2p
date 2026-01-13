@@ -1,6 +1,7 @@
 """
 Copyright © 2023 Howard Hughes Medical Institute, Authored by Carsen Stringer and Marius Pachitariu.
 """
+
 import os
 
 import numpy as np
@@ -9,13 +10,14 @@ from .utils import init_ops, find_files_open_binaries
 
 try:
     from sbxreader import sbx_memmap
+
     HAS_SBX = True
 except:
     HAS_SBX = False
-    
+
 
 def sbx_to_binary(ops, ndeadcols=-1, ndeadrows=0):
-    """  finds scanbox files and writes them to binaries
+    """finds scanbox files and writes them to binaries
 
     Parameters
     ----------
@@ -30,7 +32,9 @@ def sbx_to_binary(ops, ndeadcols=-1, ndeadrows=0):
 
     """
     if not HAS_SBX:
-        raise ImportError("sbxreader is required for this file type, please 'pip install sbxreader'")
+        raise ImportError(
+            "sbxreader is required for this file type, please 'pip install sbxreader'"
+        )
 
     ops1 = init_ops(ops)
     # the following should be taken from the metadata and not needed but the files are initialized before...
@@ -96,20 +100,24 @@ def sbx_to_binary(ops, ndeadcols=-1, ndeadrows=0):
                 im2write = im[:, :, ichan, :, :]
                 for j in range(0, nplanes):
                     if iall == 0:
-                        ops1[j]["meanImg"] = np.zeros((im.shape[3], im.shape[4]),
-                                                      np.float32)
+                        ops1[j]["meanImg"] = np.zeros(
+                            (im.shape[3], im.shape[4]), np.float32
+                        )
                         if nchannels > 1:
                             ops1[j]["meanImg_chan2"] = np.zeros(
-                                (im.shape[3], im.shape[4]), np.float32)
+                                (im.shape[3], im.shape[4]), np.float32
+                            )
                         ops1[j]["nframes"] = 0
                     if ichan == nfunc:
                         ops1[j]["meanImg"] += np.squeeze(im2mean[j, ichan, :, :])
                         reg_file[j].write(
-                            bytearray(im2write[:, j, :, :].astype("int16")))
+                            bytearray(im2write[:, j, :, :].astype("int16"))
+                        )
                     else:
                         ops1[j]["meanImg_chan2"] += np.squeeze(im2mean[j, ichan, :, :])
                         reg_file_chan2[j].write(
-                            bytearray(im2write[:, j, :, :].astype("int16")))
+                            bytearray(im2write[:, j, :, :].astype("int16"))
+                        )
 
                     ops1[j]["nframes"] += im2write.shape[0]
                     ops1[j]["nframes_per_folder"][ifile] += im2write.shape[0]
@@ -125,8 +133,8 @@ def sbx_to_binary(ops, ndeadcols=-1, ndeadrows=0):
         if not do_registration:
             ops["yrange"] = np.array([0, ops["Ly"]])
             ops["xrange"] = np.array([0, ops["Lx"]])
-        #ops["meanImg"] /= ops["nframes"]
-        #if nchannels>1:
+        # ops["meanImg"] /= ops["nframes"]
+        # if nchannels>1:
         #    ops["meanImg_chan2"] /= ops["nframes"]
         np.save(ops["ops_path"], ops)
     # close all binary files and write ops files

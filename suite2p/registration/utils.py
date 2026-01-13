@@ -1,14 +1,15 @@
 """
 Copyright © 2023 Howard Hughes Medical Institute, Authored by Carsen Stringer and Marius Pachitariu.
 """
+
 import warnings
 from functools import lru_cache
 from typing import Tuple
 
 import numpy as np
 from numba import vectorize, complex64
-from numpy.fft import ifftshift  #, fft2, ifft2
-from scipy.fft import next_fast_len  #, fft2, ifft2
+from numpy.fft import ifftshift  # , fft2, ifft2
+from scipy.fft import next_fast_len  # , fft2, ifft2
 from scipy.ndimage import gaussian_filter1d
 import torch
 
@@ -31,7 +32,8 @@ try:
         -------
         convolved_data: nImg x Ly x Lx
         """
-        return ifft2(apply_dotnorm(fft2(mov), img))  #.astype(np.complex64)
+        return ifft2(apply_dotnorm(fft2(mov), img))  # .astype(np.complex64)
+
 except:
     try:
         # pytorch > 1.7
@@ -46,7 +48,7 @@ except:
     eps = torch.complex(torch.tensor(1e-5), torch.tensor(0.0))
 
     def fft2(data, size=None):
-        """ compute fft2 over last two dimensions using pytorch
+        """compute fft2 over last two dimensions using pytorch
         size (padding) is not used
         """
         data_torch = torch.from_numpy(data)
@@ -55,7 +57,7 @@ except:
         return data_torch.cpu().numpy()
 
     def ifft2(data, size=None):
-        """ compute ifft2 over last two dimensions using pytorch
+        """compute ifft2 over last two dimensions using pytorch
         size (padding) is not used
         """
         data_torch = torch.from_numpy(data)
@@ -82,8 +84,8 @@ except:
         """
         mov_fft = torch.from_numpy(mov)
         mov_fft = torch_fft2(mov_fft, dim=(-2, -1))
-        #mov_fft = torch_fft(torch_fft(mov_fft, dim=-1), dim=-2)
-        mov_fft /= (eps + torch.abs(mov_fft))
+        # mov_fft = torch_fft(torch_fft(mov_fft, dim=-1), dim=-2)
+        mov_fft /= eps + torch.abs(mov_fft)
         mov_fft *= torch.from_numpy(img)
         mov_fft = torch.real(torch_ifft2(mov_fft, dim=(-2, -1)))
         return mov_fft.numpy()
@@ -94,14 +96,17 @@ def apply_dotnorm(Y, cfRefImg):
     return Y / (np.complex64(1e-5) + np.abs(Y)) * cfRefImg
 
 
-#@vectorize(["float32(int16, float32, float32)", "float32(float32, float32, float32)"], nopython=True, target="parallel", cache=True)
-#def addmultiply(x, mul, add):
+# @vectorize(["float32(int16, float32, float32)", "float32(float32, float32, float32)"], nopython=True, target="parallel", cache=True)
+# def addmultiply(x, mul, add):
 #    return np.float32(x) * mul + add
 
 
 @vectorize(
     ["complex64(int16, float32, float32)", "complex64(float32, float32, float32)"],
-    nopython=True, target="parallel", cache=True)
+    nopython=True,
+    target="parallel",
+    cache=True,
+)
 def addmultiply(x, mul, add):
     return np.complex64(np.float32(x) * mul + add)
 
@@ -190,8 +195,8 @@ def spatial_taper(sig, Ly, Lx):
     xx, yy = meshgrid_mean_centered(x=Lx, y=Ly)
     mY = ((Ly - 1) / 2) - 2 * sig
     mX = ((Lx - 1) / 2) - 2 * sig
-    maskY = 1. / (1. + np.exp((yy - mY) / sig))
-    maskX = 1. / (1. + np.exp((xx - mX) / sig))
+    maskY = 1.0 / (1.0 + np.exp((yy - mY) / sig))
+    maskX = 1.0 / (1.0 + np.exp((xx - mX) / sig))
     maskMul = maskY * maskX
     return maskMul
 
@@ -238,12 +243,16 @@ def spatial_smooth(data: np.ndarray, window: int):
         data = data[np.newaxis, :, :]
 
     half_pad = window // 2
-    data_padded = np.pad(data, ((0, 0), (half_pad, half_pad), (half_pad, half_pad)),
-                         mode="constant", constant_values=0)
+    data_padded = np.pad(
+        data,
+        ((0, 0), (half_pad, half_pad), (half_pad, half_pad)),
+        mode="constant",
+        constant_values=0,
+    )
 
     data_summed = data_padded.cumsum(axis=1).cumsum(axis=2, dtype=np.float32)
-    data_summed = (data_summed[:, window:, :] - data_summed[:, :-window, :])  # in X
-    data_summed = (data_summed[:, :, window:] - data_summed[:, :, :-window])  # in Y
+    data_summed = data_summed[:, window:, :] - data_summed[:, :-window, :]  # in X
+    data_summed = data_summed[:, :, window:] - data_summed[:, :, :-window]  # in Y
     data_summed /= window**2
 
     return data_summed.squeeze()
@@ -267,9 +276,10 @@ def spatial_high_pass(data, N):
     """
     if data.ndim == 2:
         data = data[np.newaxis, :, :]
-    data_filtered = data - (spatial_smooth(data, N) /
-                            spatial_smooth(np.ones(
-                                (1, data.shape[1], data.shape[2])), N))
+    data_filtered = data - (
+        spatial_smooth(data, N)
+        / spatial_smooth(np.ones((1, data.shape[1], data.shape[2])), N)
+    )
     return data_filtered.squeeze()
 
 
@@ -287,8 +297,11 @@ def complex_fft2(img: np.ndarray, pad_fft: bool = False) -> np.ndarray:
 
     """
     Ly, Lx = img.shape
-    return np.conj(fft2(img, (next_fast_len(Ly),
-                              next_fast_len(Lx)))) if pad_fft else np.conj(fft2(img))
+    return (
+        np.conj(fft2(img, (next_fast_len(Ly), next_fast_len(Lx))))
+        if pad_fft
+        else np.conj(fft2(img))
+    )
 
 
 def kernelD(xs: np.ndarray, ys: np.ndarray, sigL: float = 0.85) -> np.ndarray:
@@ -327,7 +340,7 @@ def kernelD2(xs: int, ys: int) -> np.ndarray:
     ys, xs = np.meshgrid(xs, ys)
     ys = ys.flatten().reshape(1, -1)
     xs = xs.flatten().reshape(1, -1)
-    R = np.exp(-((ys - ys.T)**2 + (xs - xs.T)**2))
+    R = np.exp(-((ys - ys.T) ** 2 + (xs - xs.T) ** 2))
     R = R / np.sum(R, axis=0)
     return R
 
@@ -348,7 +361,7 @@ def mat_upsample(lpad: int, subpixel: int = 10):
     nup: int
     """
     lar = np.arange(-lpad, lpad + 1)
-    larUP = np.arange(-lpad, lpad + .001, 1. / subpixel)
+    larUP = np.arange(-lpad, lpad + 0.001, 1.0 / subpixel)
     nup = larUP.shape[0]
     Kmat = np.linalg.inv(kernelD(lar, lar)) @ kernelD(lar, larUP)
     return Kmat, nup

@@ -1,6 +1,7 @@
 """
 Copyright © 2023 Howard Hughes Medical Institute, Authored by Carsen Stringer and Marius Pachitariu.
 """
+
 import os
 import time
 
@@ -31,9 +32,11 @@ def register_stack(Z, ops):
     ops["nframes"], ops["Ly"], ops["Lx"] = Z.shape
 
     if ops["nonrigid"]:
-        ops["yblock"], ops["xblock"], ops["nblocks"], ops["block_size"], ops[
-            "NRsm"] = nonrigid.make_blocks(Ly=ops["Ly"], Lx=ops["Lx"],
-                                           block_size=ops["block_size"])
+        ops["yblock"], ops["xblock"], ops["nblocks"], ops["block_size"], ops["NRsm"] = (
+            nonrigid.make_blocks(
+                Ly=ops["Ly"], Lx=ops["Lx"], block_size=ops["block_size"]
+            )
+        )
 
     Ly = ops["Ly"]
     Lx = ops["Lx"]
@@ -50,12 +53,18 @@ def register_stack(Z, ops):
         corrXY1 = np.zeros((0, nb), np.float32)
 
     maskMul, maskOffset, cfRefImg = rigid.prepare_masks(
-        refImg, ops)  # prepare masks for rigid registration
+        refImg, ops
+    )  # prepare masks for rigid registration
     if ops["nonrigid"]:
         # prepare masks for non- rigid registration
         maskMulNR, maskOffsetNR, cfRefImgNR = nonrigid.prepare_masks(refImg, ops)
         refAndMasks = [
-            maskMul, maskOffset, cfRefImg, maskMulNR, maskOffsetNR, cfRefImgNR
+            maskMul,
+            maskOffset,
+            cfRefImg,
+            maskMulNR,
+            maskOffsetNR,
+            cfRefImgNR,
         ]
         nb = ops["nblocks"][0] * ops["nblocks"][1]
     else:
@@ -63,19 +72,23 @@ def register_stack(Z, ops):
 
     k = 0
     nfr = 0
-    Zreg = np.zeros((
-        nframes,
-        Ly,
-        Lx,
-    ), "int16")
+    Zreg = np.zeros(
+        (
+            nframes,
+            Ly,
+            Lx,
+        ),
+        "int16",
+    )
     while True:
         irange = np.arange(nfr, nfr + nbatch)
         data = Z[irange, :, :]
         if data.size == 0:
             break
         data = np.reshape(data, (-1, Ly, Lx))
-        dwrite, ymax, xmax, cmax, yxnr = rigid.phasecorr(data, refAndMasks,
-                                                         ops)  # not here
+        dwrite, ymax, xmax, cmax, yxnr = rigid.phasecorr(
+            data, refAndMasks, ops
+        )  # not here
         dwrite = dwrite.astype("int16")  # need to hold on to this
         meanImg += dwrite.sum(axis=0)
         yoff = np.hstack((yoff, ymax))
@@ -90,14 +103,15 @@ def register_stack(Z, ops):
 
         k += 1
         if k % 5 == 0:
-            print("%d/%d frames %4.2f sec" %
-                  (nfr, ops["nframes"], time.time() - k0))  # where is this timer set?
+            print(
+                "%d/%d frames %4.2f sec" % (nfr, ops["nframes"], time.time() - k0)
+            )  # where is this timer set?
 
     # compute some potentially useful info
     ops["th_badframes"] = 100
     dx = xoff - medfilt(xoff, 101)
     dy = yoff - medfilt(yoff, 101)
-    dxy = (dx**2 + dy**2)**.5
+    dxy = (dx**2 + dy**2) ** 0.5
     cXY = corrXY / medfilt(corrXY, 101)
     px = dxy / np.mean(dxy) / np.maximum(0, cXY)
     ops["badframes"] = px > ops["th_badframes"]
@@ -123,7 +137,7 @@ def register_stack(Z, ops):
 
 
 def compute_zpos(Zreg, ops, reg_file=None):
-    """ compute z position of frames given z-stack Zreg
+    """compute z position of frames given z-stack Zreg
 
     Parameters
     ----------
@@ -152,9 +166,7 @@ def compute_zpos(Zreg, ops, reg_file=None):
     ops["nonrigid"] = False
     nplanes, zLy, zLx = Zreg.shape
     if Zreg.shape[1] > Ly or Zreg.shape[2] != Lx:
-        Zreg = Zreg[
-            :,
-        ]
+        Zreg = Zreg[:,]
 
     reg_file = ops["reg_file"] if reg_file is None else reg_file
     nbytes = os.path.getsize(reg_file)
@@ -175,8 +187,9 @@ def compute_zpos(Zreg, ops, reg_file=None):
             refImg=Z,
             maskSlope=ops["spatial_taper"] if ops["1Preg"] else 3 * ops["smooth_sigma"],
         )
-        cfRefImag = rigid.phasecorr_reference(refImg=Z,
-                                              smooth_sigma=ops["smooth_sigma"])
+        cfRefImag = rigid.phasecorr_reference(
+            refImg=Z, smooth_sigma=ops["smooth_sigma"]
+        )
         cfRefImag = cfRefImag[np.newaxis, :, :]
         refAndMasks.append((maskMul, maskOffset, cfRefImag))
 
@@ -205,17 +218,22 @@ def compute_zpos(Zreg, ops, reg_file=None):
             cfRefImg = cfRefImg.squeeze()
 
             _, _, zcorr[z, inds] = rigid.phasecorr(
-                data=rigid.apply_masks(data=data, maskMul=maskMul,
-                                       maskOffset=maskOffset),
+                data=rigid.apply_masks(
+                    data=data, maskMul=maskMul, maskOffset=maskOffset
+                ),
                 cfRefImg=cfRefImg,
                 maxregshift=ops["maxregshift"],
                 smooth_sigma_time=ops["smooth_sigma_time"],
             )
             if z % 10 == 1:
-                print("%d planes, %d/%d frames, %0.2f sec." %
-                      (z, nfr, ops["nframes"], time.time() - t0))
-        print("%d planes, %d/%d frames, %0.2f sec." %
-              (z, nfr, ops["nframes"], time.time() - t0))
+                print(
+                    "%d planes, %d/%d frames, %0.2f sec."
+                    % (z, nfr, ops["nframes"], time.time() - t0)
+                )
+        print(
+            "%d planes, %d/%d frames, %0.2f sec."
+            % (z, nfr, ops["nframes"], time.time() - t0)
+        )
         nfr += data.shape[0]
         k += 1
 

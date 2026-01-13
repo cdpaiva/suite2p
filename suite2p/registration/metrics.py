@@ -1,6 +1,7 @@
 """
 Copyright © 2023 Howard Hughes Medical Institute, Authored by Carsen Stringer and Marius Pachitariu.
 """
+
 from multiprocessing import Pool
 
 import numpy as np
@@ -11,6 +12,7 @@ from scipy.ndimage import gaussian_filter1d
 
 try:
     import cv2
+
     HAS_CV2 = True
 except ImportError:
     HAS_CV2 = False
@@ -66,10 +68,23 @@ def pclowhigh(mov, nlowhigh, nPC, random_state):
     return pclow, pchigh, w, v
 
 
-def pc_register(pclow, pchigh, bidi_corrected, spatial_hp=None, pre_smooth=None,
-                smooth_sigma=1.15, smooth_sigma_time=0, block_size=(128, 128),
-                maxregshift=0.1, maxregshiftNR=10, reg_1p=False, snr_thresh=1.25,
-                is_nonrigid=True, bidiphase_offset=0, spatial_taper=50.0):
+def pc_register(
+    pclow,
+    pchigh,
+    bidi_corrected,
+    spatial_hp=None,
+    pre_smooth=None,
+    smooth_sigma=1.15,
+    smooth_sigma_time=0,
+    block_size=(128, 128),
+    maxregshift=0.1,
+    maxregshiftNR=10,
+    reg_1p=False,
+    snr_thresh=1.25,
+    is_nonrigid=True,
+    bidiphase_offset=0,
+    spatial_taper=50.0,
+):
     """
     register top and bottom of PCs to each other
 
@@ -111,7 +126,8 @@ def pc_register(pclow, pchigh, bidi_corrected, spatial_hp=None, pre_smooth=None,
     # registration settings
     nPC, Ly, Lx = pclow.shape
     yblock, xblock, nblocks, block_size, NRsm = nonrigid.make_blocks(
-        Ly=Ly, Lx=Lx, block_size=np.array(block_size))
+        Ly=Ly, Lx=Lx, block_size=np.array(block_size)
+    )
     maxregshiftNR = np.array(maxregshiftNR)
 
     X = np.zeros((nPC, 3))
@@ -126,12 +142,14 @@ def pc_register(pclow, pchigh, bidi_corrected, spatial_hp=None, pre_smooth=None,
                 data = utils.spatial_smooth(data, int(pre_smooth))
             refImg = utils.spatial_high_pass(data, int(spatial_hp))
 
-        rmin, rmax = np.int16(np.percentile(refImg,
-                                            1)), np.int16(np.percentile(refImg, 99))
+        rmin, rmax = np.int16(np.percentile(refImg, 1)), np.int16(
+            np.percentile(refImg, 99)
+        )
         refImg = np.clip(refImg, rmin, rmax)
 
         maskMul, maskOffset = rigid.compute_masks(
-            refImg=refImg, maskSlope=spatial_taper if reg_1p else 3 * smooth_sigma)
+            refImg=refImg, maskSlope=spatial_taper if reg_1p else 3 * smooth_sigma
+        )
         cfRefImg = rigid.phasecorr_reference(
             refImg=refImg,
             smooth_sigma=smooth_sigma,
@@ -139,7 +157,9 @@ def pc_register(pclow, pchigh, bidi_corrected, spatial_hp=None, pre_smooth=None,
 
         cfRefImg = cfRefImg[np.newaxis, :, :]
         if is_nonrigid:
-            maskSlope = spatial_taper if reg_1p else 3 * smooth_sigma  # slope of taper mask at the edges
+            maskSlope = (
+                spatial_taper if reg_1p else 3 * smooth_sigma
+            )  # slope of taper mask at the edges
 
             maskMulNR, maskOffsetNR, cfRefImgNR = nonrigid.phasecorr_reference(
                 refImg0=refImg,
@@ -177,7 +197,11 @@ def pc_register(pclow, pchigh, bidi_corrected, spatial_hp=None, pre_smooth=None,
             if smooth_sigma_time > 0:
                 dwrite = gaussian_filter1d(dwrite, sigma=smooth_sigma_time, axis=0)
 
-            ymax1, xmax1, cmax1, = nonrigid.phasecorr(
+            (
+                ymax1,
+                xmax1,
+                cmax1,
+            ) = nonrigid.phasecorr(
                 data=dwrite,
                 maskMul=maskMulNR.squeeze(),
                 maskOffset=maskOffsetNR.squeeze(),
@@ -189,9 +213,9 @@ def pc_register(pclow, pchigh, bidi_corrected, spatial_hp=None, pre_smooth=None,
                 maxregshiftNR=maxregshiftNR,
             )
 
-            X[i, 1] = np.mean((ymax1**2 + xmax1**2)**.5)
-            X[i, 0] = np.mean((ymax[0]**2 + xmax[0]**2)**.5)
-            X[i, 2] = np.amax((ymax1**2 + xmax1**2)**.5)
+            X[i, 1] = np.mean((ymax1**2 + xmax1**2) ** 0.5)
+            X[i, 0] = np.mean((ymax[0] ** 2 + xmax[0] ** 2) ** 0.5)
+            X[i, 2] = np.amax((ymax1**2 + xmax1**2) ** 0.5)
     return X
 
 
@@ -222,22 +246,32 @@ def get_pc_metrics(mov, ops, use_red=False):
     random_state = ops["reg_metrics_rs"] if "reg_metrics_rs" in ops else None
     nPC = ops["reg_metric_n_pc"] if "reg_metric_n_pc" in ops else 30
     pclow, pchigh, sv, ops["tPC"] = pclowhigh(
-        mov, nlowhigh=np.minimum(300, int(ops["nframes"] / 2)), nPC=nPC,
-        random_state=random_state)
+        mov,
+        nlowhigh=np.minimum(300, int(ops["nframes"] / 2)),
+        nPC=nPC,
+        random_state=random_state,
+    )
     ops["regPC"] = np.concatenate(
-        (pclow[np.newaxis, :, :, :], pchigh[np.newaxis, :, :, :]), axis=0)
+        (pclow[np.newaxis, :, :, :], pchigh[np.newaxis, :, :, :]), axis=0
+    )
 
     ops["regDX"] = pc_register(
-        pclow, pchigh, spatial_hp=ops["spatial_hp_reg"], pre_smooth=ops["pre_smooth"],
+        pclow,
+        pchigh,
+        spatial_hp=ops["spatial_hp_reg"],
+        pre_smooth=ops["pre_smooth"],
         bidi_corrected=ops["bidi_corrected"],
         smooth_sigma=ops["smooth_sigma"] if "smooth_sigma" in ops else 1.15,
         smooth_sigma_time=ops["smooth_sigma_time"],
         block_size=ops["block_size"] if "block_size" in ops else [128, 128],
         maxregshift=ops["maxregshift"] if "maxregshift" in ops else 0.1,
         maxregshiftNR=ops["maxregshiftNR"] if "maxregshiftNR" in ops else 5,
-        reg_1p=ops["1Preg"] if "1Preg" in ops else False, snr_thresh=ops["snr_thresh"],
-        is_nonrigid=ops["nonrigid"], bidiphase_offset=ops["bidiphase"],
-        spatial_taper=ops["spatial_taper"])
+        reg_1p=ops["1Preg"] if "1Preg" in ops else False,
+        snr_thresh=ops["snr_thresh"],
+        is_nonrigid=ops["nonrigid"],
+        bidiphase_offset=ops["bidiphase"],
+        spatial_taper=ops["spatial_taper"],
+    )
     return ops
 
 
@@ -268,7 +302,7 @@ def filt_parallel(data, filt, num_cores):
 
 
 def local_corr(mov, batch_size, num_cores):
-    """ computes correlation image on mov (nframes x pixels x pixels) """
+    """computes correlation image on mov (nframes x pixels x pixels)"""
     nframes, Ly, Lx = mov.shape
 
     filt = np.ones((3, 3), np.float32)
@@ -287,9 +321,9 @@ def local_corr(mov, batch_size, num_cores):
         X -= X.mean(axis=0)
         Xstd = X.std(axis=0)
         Xstd[Xstd == 0] = np.inf
-        #X /= np.maximum(1, X.std(axis=0))
+        # X /= np.maximum(1, X.std(axis=0))
         X /= Xstd
-        #for n in range(X.shape[0]):
+        # for n in range(X.shape[0]):
         #    X[n,:,:] *= convolve2d(X[n,:,:], filt, "same")
         X *= filt_parallel(X, filt, num_cores)
         img_corr += X.mean(axis=0)
@@ -305,8 +339,11 @@ def bin_median(mov, window=10):
     if nframes < window:
         window = nframes
     mov = np.nanmedian(
-        np.reshape(mov[:int(np.floor(nframes / window) * window), :, :],
-                   (-1, window, Ly, Lx)).mean(axis=1), axis=0)
+        np.reshape(
+            mov[: int(np.floor(nframes / window) * window), :, :], (-1, window, Ly, Lx)
+        ).mean(axis=1),
+        axis=0,
+    )
     return mov
 
 
@@ -318,7 +355,7 @@ def corr_to_template(mov, tmpl):
 
     mov_flat = np.reshape(mov, (nframes, -1)).astype(np.float32)
     mov_flat -= mov_flat.mean(axis=1)[:, np.newaxis]
-    mov_std = (mov_flat**2).mean(axis=1)**0.5
+    mov_std = (mov_flat**2).mean(axis=1) ** 0.5
 
     correlations = (mov_flat * tmpl_flat).mean(axis=1) / (tmpl_std * mov_std)
 
@@ -326,16 +363,17 @@ def corr_to_template(mov, tmpl):
 
 
 def optic_flow(mov, tmpl, nflows):
-    """ optic flow computation using farneback """
+    """optic flow computation using farneback"""
     window = int(1 / 0.2)  # window size
     nframes, Ly, Lx = mov.shape
     mov = mov.astype(np.float32)
-    mov = np.reshape(mov[:int(np.floor(nframes / window) * window), :, :],
-                     (-1, window, Ly, Lx)).mean(axis=1)
+    mov = np.reshape(
+        mov[: int(np.floor(nframes / window) * window), :, :], (-1, window, Ly, Lx)
+    ).mean(axis=1)
 
-    mov = mov[np.random.permutation(mov.shape[0])[:min(nflows, mov.shape[0])], :, :]
+    mov = mov[np.random.permutation(mov.shape[0])[: min(nflows, mov.shape[0])], :, :]
 
-    pyr_scale = .5
+    pyr_scale = 0.5
     levels = 3
     winsize = 100
     iterations = 15
@@ -348,9 +386,18 @@ def optic_flow(mov, tmpl, nflows):
     flows = np.zeros((nframes, Ly, Lx, 2))
 
     for n in range(nframes):
-        flow = cv2.calcOpticalFlowFarneback(tmpl, mov[n, :, :], None, pyr_scale, levels,
-                                            winsize, iterations, poly_n, poly_sigma,
-                                            flags)
+        flow = cv2.calcOpticalFlowFarneback(
+            tmpl,
+            mov[n, :, :],
+            None,
+            pyr_scale,
+            levels,
+            winsize,
+            iterations,
+            poly_n,
+            poly_sigma,
+            flags,
+        )
 
         flows[n, :, :, :] = flow
         norms[n] = norm(flow)
@@ -359,7 +406,7 @@ def optic_flow(mov, tmpl, nflows):
 
 
 def get_flow_metrics(ops):
-    """ get farneback optical flow and some other stats from normcorre paper """
+    """get farneback optical flow and some other stats from normcorre paper"""
     # done in batches for memory reasons
     Ly = ops["Ly"]
     Lx = ops["Lx"]
@@ -389,18 +436,24 @@ def get_flow_metrics(ops):
             break
         mov = np.reshape(mov, (-1, Ly, Lx))
 
-        mov = mov[np.ix_(np.arange(0, mov.shape[0], 1, int),
-                         np.arange(ops["yrange"][0], ops["yrange"][1], 1, int),
-                         np.arange(ops["xrange"][0], ops["xrange"][1], 1, int))]
+        mov = mov[
+            np.ix_(
+                np.arange(0, mov.shape[0], 1, int),
+                np.arange(ops["yrange"][0], ops["yrange"][1], 1, int),
+                np.arange(ops["xrange"][0], ops["xrange"][1], 1, int),
+            )
+        ]
 
         img_corr += local_corr(mov[:, :, :], 1000, ops["num_workers"])
         img_median += bin_median(mov)
         k += 1
 
         smoothness += np.sqrt(
-            np.sum(np.sum(np.array(np.gradient(np.mean(mov, 0)))**2, 0)))
-        smoothness_corr += np.sqrt(np.sum(np.sum(np.array(np.gradient(img_corr))**2,
-                                                 0)))
+            np.sum(np.sum(np.array(np.gradient(np.mean(mov, 0))) ** 2, 0))
+        )
+        smoothness_corr += np.sqrt(
+            np.sum(np.sum(np.array(np.gradient(img_corr)) ** 2, 0))
+        )
 
         tmpl = img_median / k
 

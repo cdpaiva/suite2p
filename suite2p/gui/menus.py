@@ -1,6 +1,7 @@
 """
 Copyright © 2023 Howard Hughes Medical Institute, Authored by Carsen Stringer and Marius Pachitariu.
 """
+
 from qtpy import QtGui
 from qtpy.QtWidgets import QAction, QMenu
 from pkg_resources import iter_entry_points
@@ -52,7 +53,8 @@ def mainmenu(parent):
     # Save NWB file
     parent.saveNWB = QAction("Save NWB file", parent)
     parent.saveNWB.triggered.connect(
-        lambda: save_nwb(get_suite2p_path(parent.basename)))
+        lambda: save_nwb(get_suite2p_path(parent.basename))
+    )
     parent.saveNWB.setEnabled(False)
     parent.addAction(parent.saveNWB)
 
@@ -93,7 +95,8 @@ def classifier(parent):
     parent.loadMenu.addAction(parent.loadClass)
     parent.loadUClass = QAction("default classifier", parent)
     parent.loadUClass.triggered.connect(
-        lambda: classgui.load_default_classifier(parent))
+        lambda: classgui.load_default_classifier(parent)
+    )
     parent.loadUClass.setEnabled(False)
     parent.loadMenu.addAction(parent.loadUClass)
     parent.loadSClass = QAction("built-in classifier", parent)
@@ -174,8 +177,9 @@ def plugins(parent):
         action = QAction(
             parent.plugins[entry_pt.name].name, parent
         )  # create plugin menu item with the name property of the loaded class
-        action.triggered.connect(parent.plugins[entry_pt.name].trigger
-                                )  # attach class method "trigger" to plugin menu action
+        action.triggered.connect(
+            parent.plugins[entry_pt.name].trigger
+        )  # attach class method "trigger" to plugin menu action
         plugin_menu.addAction(action)
 
 

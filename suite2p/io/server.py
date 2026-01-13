@@ -1,13 +1,16 @@
 """
 Copyright © 2023 Howard Hughes Medical Institute, Authored by Carsen Stringer and Marius Pachitariu.
 """
+
 import sys, os, time, glob
 from pathlib import Path
 from natsort import natsorted
 import numpy as np
+
 try:
     import paramiko
-    HAS_PARAMIKO = True 
+
+    HAS_PARAMIKO = True
 except:
     HAS_PARAMIKO = False
 
@@ -15,8 +18,9 @@ except:
 def unix_path(path):
     return str(path).replace(os.sep, "/")
 
+
 def ssh_connect(host, username, password, verbose=True):
-    """ from paramiko example """
+    """from paramiko example"""
     i = 0
     while True:
         if verbose:
@@ -41,11 +45,19 @@ def ssh_connect(host, username, password, verbose=True):
             sys.exit(1)
     return ssh
 
-def send_jobs(save_folder, host=None, username=None, password=None, server_root=None,
-              local_root=None, n_cores=8):
-    """ send each plane to compute on server separately
 
-    add your own host, username, password and path on server 
+def send_jobs(
+    save_folder,
+    host=None,
+    username=None,
+    password=None,
+    server_root=None,
+    local_root=None,
+    n_cores=8,
+):
+    """send each plane to compute on server separately
+
+    add your own host, username, password and path on server
     for where to save the data
 
     """
@@ -118,16 +130,18 @@ def send_jobs(save_folder, host=None, username=None, password=None, server_root=
             if "raw_file_chan2" in op:
                 op["raw_file_chan2"] = unix_path(save_path / "data_chan2_raw.bin")
                 if copy:
-                    ftp_client.put(fast_disk_orig / "data_raw_chan2.bin",
-                                   op["raw_file_chan2"])
+                    ftp_client.put(
+                        fast_disk_orig / "data_raw_chan2.bin", op["raw_file_chan2"]
+                    )
         else:
             if copy:
                 ftp_client.put(fast_disk_orig / "data.bin", op["reg_file"])
             if "reg_file_chan2" in op:
                 op["reg_file_chan2"] = unix_path(save_path / "data_chan2.bin")
                 if copy:
-                    ftp_client.put(fast_disk_orig / "data_chan2.bin",
-                                   op["reg_file_chan2"])
+                    ftp_client.put(
+                        fast_disk_orig / "data_chan2.bin", op["reg_file_chan2"]
+                    )
 
         # save final version of ops and send to server
         np.save(ops_path_orig, op)
@@ -136,8 +150,10 @@ def send_jobs(save_folder, host=None, username=None, password=None, server_root=
             ftp_client.put(ops_path_orig, op["ops_path"])
 
         # run plane (server-specific command)
-        run_command = '''bsub -n %d -J test_s2p%d -R"select[avx512]" -o out%d.txt "~/run_script.sh "%s" > log%d.txt''' % (
-            n_cores, ipl, ipl, op["ops_path"], ipl)
+        run_command = (
+            """bsub -n %d -J test_s2p%d -R"select[avx512]" -o out%d.txt "~/run_script.sh "%s" > log%d.txt"""
+            % (n_cores, ipl, ipl, op["ops_path"], ipl)
+        )
         stdin, stdout, stderr = ssh.exec_command(run_command)
         print(stdout.readlines()[0])
 

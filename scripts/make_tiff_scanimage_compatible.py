@@ -15,6 +15,7 @@ def convert_tiff_to_scanimage(from_filename: str, to_filename: str) -> None:
 
 def main():
     from argparse import ArgumentParser
+
     parser = ArgumentParser(description="convert tiff to ScanImage-compatible tiff.")
     parser.add_argument("infile", help="the tif file to process.")
     parser.add_argument("outfile", help="the tif filename to create")
@@ -23,5 +24,5 @@ def main():
     convert_tiff_to_scanimage(from_filename=args.infile, to_filename=args.outfile)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

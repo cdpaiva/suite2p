@@ -1,6 +1,7 @@
 """
 Tests for the Suite2p IO module
 """
+
 import pathlib
 import platform
 import re
@@ -20,9 +21,7 @@ def binfile1500(test_ops):
     test_ops["tiff_list"] = ["input_1500.tif"]
     op = io.tiff_to_binary(test_ops)
     bin_filename = str(Path(op["save_path0"]).joinpath("suite2p/plane0/data.bin"))
-    with io.BinaryFile(
-        Ly=op["Ly"], Lx=op["Lx"], filename=bin_filename
-    ) as bin_file:
+    with io.BinaryFile(Ly=op["Ly"], Lx=op["Lx"], filename=bin_filename) as bin_file:
         yield bin_file
 
 
@@ -38,7 +37,7 @@ def replace_ops_save_path_with_local_path(request):
     if platform.system() == "Windows":
         pathlib.PosixPath = pathlib.WindowsPath
 
-    # Get the `data_folder` variable from the running test name    
+    # Get the `data_folder` variable from the running test name
     data_folder = re.search(r"\[(.*?)(-.*?)?\]", request.node.name).group(1)
     save_folder = Path("data").joinpath("test_outputs", data_folder, "suite2p")
 

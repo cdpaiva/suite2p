@@ -1,6 +1,7 @@
 """
 Copyright © 2023 Howard Hughes Medical Institute, Authored by Carsen Stringer and Marius Pachitariu.
 """
+
 import os
 import gc
 import math
@@ -10,6 +11,7 @@ from . import utils
 
 try:
     import dcimg
+
     DCIMG = True
 except ImportError:
     DCIMG = False
@@ -72,20 +74,20 @@ def dcimg_to_binary(ops):
                 im2write = im_p[:]
                 for j in range(0, nplanes):
                     if iall == 0:
-                        ops1[j]["meanImg"] = np.zeros((im_p.shape[1], im_p.shape[2]),
-                                                      np.float32)
+                        ops1[j]["meanImg"] = np.zeros(
+                            (im_p.shape[1], im_p.shape[2]), np.float32
+                        )
                         if nchannels > 1:
                             ops1[j]["meanImg_chan2"] = np.zeros(
-                                (im_p.shape[1], im_p.shape[2]), np.float32)
+                                (im_p.shape[1], im_p.shape[2]), np.float32
+                            )
                         ops1[j]["nframes"] = 0
                     if ichan == nfunc:
                         ops1[j]["meanImg"] += np.squeeze(im2mean)
-                        reg_file[j].write(
-                            bytearray(im2write[:].astype("uint16")))
+                        reg_file[j].write(bytearray(im2write[:].astype("uint16")))
                     else:
                         ops1[j]["meanImg_chan2"] += np.squeeze(im2mean)
-                        reg_file_chan2[j].write(
-                            bytearray(im2write[:].astype("uint16")))
+                        reg_file_chan2[j].write(bytearray(im2write[:].astype("uint16")))
 
                     ops1[j]["nframes"] += im2write.shape[0]
             ik += nframes

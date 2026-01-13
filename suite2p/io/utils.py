@@ -1,6 +1,7 @@
 """
 Copyright © 2023 Howard Hughes Medical Institute, Authored by Carsen Stringer and Marius Pachitariu.
 """
+
 import glob
 import os
 from pathlib import Path
@@ -31,7 +32,7 @@ def search_for_ext(rootdir, extension="tif", look_one_level_down=False):
 
 
 def get_sbx_list(ops):
-    """ make list of scanbox files to process
+    """make list of scanbox files to process
     if ops["subfolders"], then all tiffs ops["data_path"][0] / ops["subfolders"] / *.sbx
     if ops["look_one_level_down"], then all tiffs in all folders + one level down
     TODO: Implement "tiff_list" functionality
@@ -50,8 +51,9 @@ def get_sbx_list(ops):
         fold_list = froot
     fsall = []
     for k, fld in enumerate(fold_list):
-        fs = search_for_ext(fld, extension="sbx",
-                            look_one_level_down=ops["look_one_level_down"])
+        fs = search_for_ext(
+            fld, extension="sbx", look_one_level_down=ops["look_one_level_down"]
+        )
         fsall.extend(fs)
     if len(fsall) == 0:
         print(fold_list)
@@ -60,8 +62,9 @@ def get_sbx_list(ops):
         print("** Found %d sbx - converting to binary **" % (len(fsall)))
     return fsall, ops
 
+
 def get_movie_list(ops):
-    """ make list of movie files to process
+    """make list of movie files to process
     if ops["subfolders"], then all  ops["data_path"][0] / ops["subfolders"] / *.avi or *.mp4
     if ops["look_one_level_down"], then all tiffs in all folders + one level down
     """
@@ -80,12 +83,14 @@ def get_movie_list(ops):
     fsall = []
     for k, fld in enumerate(fold_list):
         try:
-            fs = search_for_ext(fld, extension="mp4",
-                                look_one_level_down=ops["look_one_level_down"])
+            fs = search_for_ext(
+                fld, extension="mp4", look_one_level_down=ops["look_one_level_down"]
+            )
             fsall.extend(fs)
         except:
-            fs = search_for_ext(fld, extension="avi",
-                                look_one_level_down=ops["look_one_level_down"])
+            fs = search_for_ext(
+                fld, extension="avi", look_one_level_down=ops["look_one_level_down"]
+            )
             fsall.extend(fs)
     if len(fsall) == 0:
         print(fold_list)
@@ -93,7 +98,6 @@ def get_movie_list(ops):
     else:
         print("** Found %d movies - converting to binary **" % (len(fsall)))
     return fsall, ops
-
 
 
 def list_h5(ops):
@@ -107,8 +111,7 @@ def list_h5(ops):
 
 
 def list_files(froot, look_one_level_down, exts):
-    """ get list of files with exts in folder froot + one level down maybe
-    """
+    """get list of files with exts in folder froot + one level down maybe"""
     fs = []
     for e in exts:
         lpath = os.path.join(froot, e)
@@ -137,7 +140,7 @@ def list_files(froot, look_one_level_down, exts):
 
 
 def get_h5_list(ops):
-    """ make list of h5 files to process
+    """make list of h5 files to process
     if ops["look_one_level_down"], then all h5"s in all folders + one level down
     """
     froot = ops["data_path"]
@@ -146,11 +149,12 @@ def get_h5_list(ops):
     nfs = 0
     first_tiffs = []
     for k, fld in enumerate(fold_list):
-        fs, ftiffs = list_files(fld, ops["look_one_level_down"], 
-                                ["*.h5", "*.hdf5", "*.mesc"])
+        fs, ftiffs = list_files(
+            fld, ops["look_one_level_down"], ["*.h5", "*.hdf5", "*.mesc"]
+        )
         fsall.extend(fs)
         first_tiffs.extend(list(ftiffs))
-    #if len(fs) > 0 and not isinstance(fs, list):
+    # if len(fs) > 0 and not isinstance(fs, list):
     #    fs = [fs]
     if len(fs) == 0:
         print("Could not find any h5 files")
@@ -158,12 +162,12 @@ def get_h5_list(ops):
     else:
         ops["first_tiffs"] = np.array(first_tiffs).astype("bool")
         print("** Found %d h5 files - converting to binary **" % (len(fsall)))
-        #print("Found %d tifs"%(len(fsall)))
+        # print("Found %d tifs"%(len(fsall)))
     return fsall, ops
 
 
 def get_tif_list(ops):
-    """ make list of tiffs to process
+    """make list of tiffs to process
     if ops["subfolders"], then all tiffs ops["data_path"][0] / ops["subfolders"] / *.tif
     if ops["look_one_level_down"], then all tiffs in all folders + one level down
     if ops["tiff_list"], then ops["data_path"][0] / ops["tiff_list"] ONLY
@@ -192,8 +196,9 @@ def get_tif_list(ops):
         nfs = 0
         first_tiffs = []
         for k, fld in enumerate(fold_list):
-            fs, ftiffs = list_files(fld, ops["look_one_level_down"],
-                                    ["*.tif", "*.tiff", "*.TIF", "*.TIFF"])
+            fs, ftiffs = list_files(
+                fld, ops["look_one_level_down"], ["*.tif", "*.tiff", "*.TIF", "*.TIFF"]
+            )
             fsall.extend(fs)
             first_tiffs.extend(list(ftiffs))
         if len(fsall) == 0:
@@ -206,7 +211,7 @@ def get_tif_list(ops):
 
 
 def get_nd2_list(ops):
-    """ make list of nd2 files to process
+    """make list of nd2 files to process
     if ops["look_one_level_down"], then all nd2"s in all folders + one level down
     """
     froot = ops["data_path"]
@@ -226,9 +231,10 @@ def get_nd2_list(ops):
         print("** Found %d nd2 files - converting to binary **" % (len(fsall)))
     return fsall, ops
 
+
 def get_dcimg_list(ops):
-    """ make list of dcimg files to process
-        if ops["look_one_level_down"], then all dcimg"s in all folders + one level down
+    """make list of dcimg files to process
+    if ops["look_one_level_down"], then all dcimg"s in all folders + one level down
     """
     froot = ops["data_path"]
     fold_list = ops["data_path"]
@@ -247,8 +253,9 @@ def get_dcimg_list(ops):
         print("** Found %d dcimg files - converting to binary **" % (len(fsall)))
     return fsall, ops
 
+
 def find_files_open_binaries(ops1, ish5=False):
-    """  finds tiffs or h5 files and opens binaries for writing
+    """finds tiffs or h5 files and opens binaries for writing
 
     Parameters
     ----------
@@ -295,7 +302,7 @@ def find_files_open_binaries(ops1, ish5=False):
             # find h5"s
             else:
                 raise Exception("No h5 files found")
-        
+
     elif input_format == "sbx":
         # find sbx
         fs, ops2 = get_sbx_list(ops1[0])
@@ -327,7 +334,7 @@ def find_files_open_binaries(ops1, ish5=False):
 
 
 def init_ops(ops):
-    """ initializes ops files for each plane in recording
+    """initializes ops files for each plane in recording
 
     Parameters
     ----------
@@ -349,7 +356,7 @@ def init_ops(ops):
         lines = ops["lines"]
     if "iplane" in ops:
         iplane = ops["iplane"]
-        #ops["nplanes"] = len(ops["lines"])
+        # ops["nplanes"] = len(ops["lines"])
     ops1 = []
     if ("fast_disk" not in ops) or len(ops["fast_disk"]) == 0:
         ops["fast_disk"] = ops["save_path0"]
@@ -361,8 +368,9 @@ def init_ops(ops):
     # compile ops into list across planes
     for j in range(0, nplanes):
         if len(ops["save_folder"]) > 0:
-            ops["save_path"] = os.path.join(ops["save_path0"], ops["save_folder"],
-                                            "plane%d" % j)
+            ops["save_path"] = os.path.join(
+                ops["save_path0"], ops["save_folder"], "plane%d" % j
+            )
         else:
             ops["save_path"] = os.path.join(ops["save_path0"], "suite2p", "plane%d" % j)
 
@@ -403,7 +411,7 @@ def get_suite2p_path(path: Path) -> Path:
         for path_idx in range(len(path.parts) - 1, 0, -1):
             if path.parts[path_idx] == "suite2p":
                 new_path = Path(path.parts[0])
-                for path_part in path.parts[1:path_idx + 1]:
+                for path_part in path.parts[1 : path_idx + 1]:
                     new_path = new_path.joinpath(path_part)
                 break
     else:

@@ -1,6 +1,7 @@
 """
 Copyright © 2023 Howard Hughes Medical Institute, Authored by Carsen Stringer and Marius Pachitariu.
 """
+
 import os, time
 import numpy as np
 import scipy.io
@@ -55,8 +56,12 @@ def make_masks_and_enable_buttons(parent):
         parent.stat[n]["yext"] = yext
         parent.stat[n]["xext"] = xext
         ycirc, xcirc = utils.circle(parent.stat[n]["med"], parent.stat[n]["radius"])
-        goodi = ((ycirc >= 0) & (xcirc >= 0) & (ycirc < parent.ops["Ly"]) &
-                 (xcirc < parent.ops["Lx"]))
+        goodi = (
+            (ycirc >= 0)
+            & (xcirc >= 0)
+            & (ycirc < parent.ops["Ly"])
+            & (xcirc < parent.ops["Lx"])
+        )
         parent.stat[n]["ycirc"] = ycirc[goodi]
         parent.stat[n]["xcirc"] = xcirc[goodi]
         parent.stat[n]["inmerge"] = 0
@@ -89,16 +94,19 @@ def make_masks_and_enable_buttons(parent):
     graphics.init_range(parent)
     traces.plot_trace(parent)
     parent.xyrat = 1.0
-    if (isinstance(parent.ops["diameter"], (list, np.ndarray)) and
-            len(parent.ops["diameter"]) > 1 and parent.ops.get("aspect", 1.0)):
+    if (
+        isinstance(parent.ops["diameter"], (list, np.ndarray))
+        and len(parent.ops["diameter"]) > 1
+        and parent.ops.get("aspect", 1.0)
+    ):
         parent.xyrat = parent.ops["diameter"][0] / parent.ops["diameter"][1]
     else:
         parent.xyrat = parent.ops.get("aspect", 1.0)
 
     parent.p1.setAspectLocked(lock=True, ratio=parent.xyrat)
     parent.p2.setAspectLocked(lock=True, ratio=parent.xyrat)
-    #parent.p2.setXLink(parent.p1)
-    #parent.p2.setYLink(parent.p1)
+    # parent.p2.setXLink(parent.p1)
+    # parent.p2.setYLink(parent.p1)
     parent.loaded = True
     parent.mode_change(2)
     parent.show()
@@ -138,8 +146,8 @@ def enable_views_and_classifier(parent):
             parent.colorbtns.button(b).setEnabled(True)
             parent.colorbtns.button(b).setStyleSheet(parent.styleUnpressed)
 
-    #parent.applyclass.setStyleSheet(parent.styleUnpressed)
-    #parent.applyclass.setEnabled(True)
+    # parent.applyclass.setStyleSheet(parent.styleUnpressed)
+    # parent.applyclass.setEnabled(True)
     b = 0
     for btn in parent.sizebtns.buttons():
         btn.setStyleSheet(parent.styleUnpressed)
@@ -177,6 +185,7 @@ def load_dialog(parent):
     parent.fname = name[0]
     load_proc(parent)
 
+
 def load_dialog_NWB(parent):
     dlg_kwargs = {
         "parent": parent,
@@ -187,14 +196,16 @@ def load_dialog_NWB(parent):
     parent.fname = name[0]
     load_NWB(parent)
 
+
 def load_dialog_folder(parent):
     dlg_kwargs = {
         "parent": parent,
         "caption": "Open folder with planeX folders",
-    }    
+    }
     name = QFileDialog.getExistingDirectory(**dlg_kwargs)
     parent.fname = name
     load_folder(parent)
+
 
 def load_NWB(parent):
     name = parent.fname
@@ -222,7 +233,8 @@ def load_folder(parent):
     stat_found = False
     if len(plane_folders) > 0:
         stat_found = all(
-            [os.path.isfile(os.path.join(f, "stat.npy")) for f in plane_folders])
+            [os.path.isfile(os.path.join(f, "stat.npy")) for f in plane_folders]
+        )
     if not stat_found:
         print("No processed planeX folders in folder")
         return
@@ -236,13 +248,12 @@ def load_folder(parent):
 
 
 def load_files(name):
-    """ give stat.npy path and load all needed files for suite2p """
+    """give stat.npy path and load all needed files for suite2p"""
     try:
         stat = np.load(name, allow_pickle=True)
         ypix = stat[0]["ypix"]
     except (ValueError, KeyError, OSError, RuntimeError, TypeError, NameError):
-        print("ERROR: this is not a stat.npy file :( "
-              "(needs stat[n]['ypix']!)")
+        print("ERROR: this is not a stat.npy file :( " "(needs stat[n]['ypix']!)")
         stat = None
     goodfolder = False
     if stat is not None:
@@ -252,14 +263,15 @@ def load_files(name):
             Fcell = np.load(basename + "/F.npy")
             Fneu = np.load(basename + "/Fneu.npy")
         except (ValueError, OSError, RuntimeError, TypeError, NameError):
-            print("ERROR: there are no fluorescence traces in this folder "
-                  "(F.npy/Fneu.npy)")
+            print(
+                "ERROR: there are no fluorescence traces in this folder "
+                "(F.npy/Fneu.npy)"
+            )
             goodfolder = False
         try:
             Spks = np.load(basename + "/spks.npy")
         except (ValueError, OSError, RuntimeError, TypeError, NameError):
-            print("there are no spike deconvolved traces in this folder "
-                  "(spks.npy)")
+            print("there are no spike deconvolved traces in this folder " "(spks.npy)")
             goodfolder = False
         try:
             ops = np.load(basename + "/ops.npy", allow_pickle=True).item()
@@ -293,7 +305,18 @@ def load_files(name):
         return None
 
     if goodfolder:
-        return stat, ops, Fcell, Fneu, Spks, iscell, probcell, redcell, probredcell, hasred
+        return (
+            stat,
+            ops,
+            Fcell,
+            Fneu,
+            Spks,
+            iscell,
+            probcell,
+            redcell,
+            probredcell,
+            hasred,
+        )
     else:
         print("stat.npy found, but other files not in folder")
         return None
@@ -369,8 +392,9 @@ def load_behavior(parent):
         parent.beh = beh
         parent.beh_time = beh_time
         if bresample:
-            parent.beh_resampled = resample_frames(parent.beh, parent.beh_time,
-                                                   np.arange(0, parent.Fcell.shape[1]))
+            parent.beh_resampled = resample_frames(
+                parent.beh, parent.beh_time, np.arange(0, parent.Fcell.shape[1])
+            )
         else:
             parent.beh_resampled = parent.beh
         b = 8
@@ -389,7 +413,7 @@ def load_behavior(parent):
 
 
 def resample_frames(y, x, xt):
-    """ resample y (defined at x) at times xt """
+    """resample y (defined at x) at times xt"""
     ts = x.size / xt.size
     y = gaussian_filter1d(y, np.ceil(ts / 2), axis=0)
     f = interp1d(x, y, fill_value="extrapolate")
@@ -400,9 +424,14 @@ def resample_frames(y, x, xt):
 def save_redcell(parent):
     np.save(
         os.path.join(parent.basename, "redcell.npy"),
-        np.concatenate((np.expand_dims(parent.redcell[parent.notmerged], axis=1),
-                        np.expand_dims(parent.probredcell[parent.notmerged], axis=1)),
-                       axis=1))
+        np.concatenate(
+            (
+                np.expand_dims(parent.redcell[parent.notmerged], axis=1),
+                np.expand_dims(parent.probredcell[parent.notmerged], axis=1),
+            ),
+            axis=1,
+        ),
+    )
 
 
 def save_iscell(parent):
@@ -426,25 +455,25 @@ def save_mat(parent):
     if "date_proc" in parent.ops:
         parent.ops["date_proc"] = []
     scipy.io.savemat(
-        matpath, {
-            "stat":
-                parent.stat,
-            "ops":
-                parent.ops,
-            "F":
-                parent.Fcell,
-            "Fneu":
-                parent.Fneu,
-            "spks":
-                parent.Spks,
-            "iscell":
-                np.concatenate(
-                    (parent.iscell[:, np.newaxis], parent.probcell[:, np.newaxis]),
-                    axis=1),
-            "redcell":
-                np.concatenate((np.expand_dims(parent.redcell, axis=1),
-                                np.expand_dims(parent.probredcell, axis=1)), axis=1)
-        })
+        matpath,
+        {
+            "stat": parent.stat,
+            "ops": parent.ops,
+            "F": parent.Fcell,
+            "Fneu": parent.Fneu,
+            "spks": parent.Spks,
+            "iscell": np.concatenate(
+                (parent.iscell[:, np.newaxis], parent.probcell[:, np.newaxis]), axis=1
+            ),
+            "redcell": np.concatenate(
+                (
+                    np.expand_dims(parent.redcell, axis=1),
+                    np.expand_dims(parent.probredcell, axis=1),
+                ),
+                axis=1,
+            ),
+        },
+    )
 
 
 def save_merge(parent):
@@ -458,12 +487,18 @@ def save_merge(parent):
         np.save(os.path.join(parent.basename, "Fneu_chan2.npy"), parent.Fneu_chan2)
         np.save(
             os.path.join(parent.basename, "redcell.npy"),
-            np.concatenate((np.expand_dims(
-                parent.redcell, axis=1), np.expand_dims(parent.probredcell, axis=1)),
-                           axis=1))
+            np.concatenate(
+                (
+                    np.expand_dims(parent.redcell, axis=1),
+                    np.expand_dims(parent.probredcell, axis=1),
+                ),
+                axis=1,
+            ),
+        )
     np.save(os.path.join(parent.basename, "spks.npy"), parent.Spks)
     iscell = np.concatenate(
-        (parent.iscell[:, np.newaxis], parent.probcell[:, np.newaxis]), axis=1)
+        (parent.iscell[:, np.newaxis], parent.probcell[:, np.newaxis]), axis=1
+    )
     np.save(os.path.join(parent.basename, "iscell.npy"), iscell)
 
     parent.notmerged = np.ones(parent.iscell.size, "bool")
@@ -498,8 +533,9 @@ def load_custom_mask(parent):
 
 
 def load_again(parent, Text):
-    tryagain = QMessageBox.question(parent, "ERROR", Text,
-                                    QMessageBox.Yes | QMessageBox.No)
+    tryagain = QMessageBox.question(
+        parent, "ERROR", Text, QMessageBox.Yes | QMessageBox.No
+    )
 
     if tryagain == QMessageBox.Yes:
         load_dialog(parent)

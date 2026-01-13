@@ -1,6 +1,7 @@
 """
 Copyright © 2023 Howard Hughes Medical Institute, Authored by Carsen Stringer and Marius Pachitariu.
 """
+
 import os
 import gc
 import math
@@ -9,10 +10,12 @@ import numpy as np
 from . import utils
 
 try:
-    import nd2 
+    import nd2
+
     ND2 = True
 except ImportError:
     ND2 = False
+
 
 def nd2_to_binary(ops):
     """finds nd2 files and writes them to binaries
@@ -55,7 +58,8 @@ def nd2_to_binary(ops):
 
         # Sort the dimensions in the order of TZCYX, skipping the missing ones.
         im = nd2_file.asarray().transpose(
-            [nd2_dims[x] for x in valid_dimensions if x in nd2_dims])
+            [nd2_dims[x] for x in valid_dimensions if x in nd2_dims]
+        )
 
         # Expand array to include the missing dimensions.
         for i, dim in enumerate("TZC"):
@@ -88,20 +92,24 @@ def nd2_to_binary(ops):
                 im2write = im_p[:, :, ichan, :, :]
                 for j in range(0, nplanes):
                     if iall == 0:
-                        ops1[j]["meanImg"] = np.zeros((im_p.shape[3], im_p.shape[4]),
-                                                      np.float32)
+                        ops1[j]["meanImg"] = np.zeros(
+                            (im_p.shape[3], im_p.shape[4]), np.float32
+                        )
                         if nchannels > 1:
                             ops1[j]["meanImg_chan2"] = np.zeros(
-                                (im_p.shape[3], im_p.shape[4]), np.float32)
+                                (im_p.shape[3], im_p.shape[4]), np.float32
+                            )
                         ops1[j]["nframes"] = 0
                     if ichan == nfunc:
                         ops1[j]["meanImg"] += np.squeeze(im2mean[j, ichan, :, :])
                         reg_file[j].write(
-                            bytearray(im2write[:, j, :, :].astype("int16")))
+                            bytearray(im2write[:, j, :, :].astype("int16"))
+                        )
                     else:
                         ops1[j]["meanImg_chan2"] += np.squeeze(im2mean[j, ichan, :, :])
                         reg_file_chan2[j].write(
-                            bytearray(im2write[:, j, :, :].astype("int16")))
+                            bytearray(im2write[:, j, :, :].astype("int16"))
+                        )
 
                     ops1[j]["nframes"] += im2write.shape[0]
             ik += nframes

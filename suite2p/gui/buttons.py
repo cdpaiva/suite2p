@@ -1,13 +1,14 @@
 """
 Copyright © 2023 Howard Hughes Medical Institute, Authored by Carsen Stringer and Marius Pachitariu.
 """
+
 import numpy as np
 from qtpy import QtGui, QtCore
 from qtpy.QtWidgets import QPushButton, QButtonGroup, QLabel, QLineEdit
 
 
 def make_selection(parent):
-    """ buttons to draw a square on view """
+    """buttons to draw a square on view"""
     parent.topbtns = QButtonGroup()
     ql = QLabel("select cells")
     ql.setStyleSheet("color: white;")
@@ -40,7 +41,7 @@ def make_selection(parent):
 
 # minimize view
 def make_cellnotcell(parent):
-    """ buttons for cell / not cell views at top """
+    """buttons for cell / not cell views at top"""
     # number of ROIs in each image
     parent.lcell0 = QLabel("")
     parent.lcell0.setStyleSheet("color: white;")
@@ -65,22 +66,27 @@ def make_cellnotcell(parent):
 
 
 def make_quadrants(parent):
-    """ make quadrant buttons """
+    """make quadrant buttons"""
     parent.quadbtns = QButtonGroup(parent)
     for b in range(9):
         btn = QuadButton(b, " " + str(b + 1), parent)
         parent.quadbtns.addButton(btn, b)
-        parent.l0.addWidget(btn, 0 + parent.quadbtns.button(b).ypos,
-                            29 + parent.quadbtns.button(b).xpos, 1, 1)
+        parent.l0.addWidget(
+            btn,
+            0 + parent.quadbtns.button(b).ypos,
+            29 + parent.quadbtns.button(b).xpos,
+            1,
+            1,
+        )
         btn.setEnabled(False)
         b += 1
     parent.quadbtns.setExclusive(True)
 
 
 class QuadButton(QPushButton):
-    """ custom QPushButton class for quadrant plotting
-        requires buttons to put into a QButtonGroup (parent.quadbtns)
-         allows only 1 button to pressed at a time
+    """custom QPushButton class for quadrant plotting
+    requires buttons to put into a QButtonGroup (parent.quadbtns)
+     allows only 1 button to pressed at a time
     """
 
     def __init__(self, bid, Text, parent=None):
@@ -101,10 +107,12 @@ class QuadButton(QPushButton):
             if parent.quadbtns.button(b).isEnabled():
                 parent.quadbtns.button(b).setStyleSheet(parent.styleUnpressed)
         self.setStyleSheet(parent.stylePressed)
-        self.xrange = np.array([self.xpos - .15, self.xpos + 1.15
-                               ]) * parent.ops["Lx"] / 3
-        self.yrange = np.array([self.ypos - .15, self.ypos + 1.15
-                               ]) * parent.ops["Ly"] / 3
+        self.xrange = (
+            np.array([self.xpos - 0.15, self.xpos + 1.15]) * parent.ops["Lx"] / 3
+        )
+        self.yrange = (
+            np.array([self.ypos - 0.15, self.ypos + 1.15]) * parent.ops["Ly"] / 3
+        )
         # change the zoom
         parent.p1.setXRange(self.xrange[0], self.xrange[1])
         parent.p1.setYRange(self.yrange[0], self.yrange[1])
@@ -117,7 +125,7 @@ class QuadButton(QPushButton):
 
 # size of view
 class SizeButton(QPushButton):
-    """ buttons to make trace box bigger or smaller """
+    """buttons to make trace box bigger or smaller"""
 
     def __init__(self, bid, Text, parent=None):
         super(SizeButton, self).__init__(parent)
@@ -171,7 +179,7 @@ class SizeButton(QPushButton):
 
 #
 class TopButton(QPushButton):
-    """ selection of top neurons"""
+    """selection of top neurons"""
 
     def __init__(self, bid, parent=None):
         super(TopButton, self).__init__(parent)

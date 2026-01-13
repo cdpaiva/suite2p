@@ -1,13 +1,15 @@
 """
 Copyright © 2023 Howard Hughes Medical Institute, Authored by Carsen Stringer and Marius Pachitariu.
 """
+
 import math
 
 try:
     import h5py
-    HAS_H5PY=True
+
+    HAS_H5PY = True
 except:
-    HAS_H5PY=False
+    HAS_H5PY = False
 import numpy as np
 import os
 
@@ -15,7 +17,7 @@ from .utils import init_ops, find_files_open_binaries
 
 
 def h5py_to_binary(ops):
-    """  finds h5 files and writes them to binaries
+    """finds h5 files and writes them to binaries
 
     Parameters
     ----------
@@ -30,7 +32,9 @@ def h5py_to_binary(ops):
 
     """
     if not HAS_H5PY:
-        raise ImportError("h5py is required for this file type, please 'pip install h5py'")
+        raise ImportError(
+            "h5py is required for this file type, please 'pip install h5py'"
+        )
 
     ops1 = init_ops(ops)
 
@@ -60,8 +64,9 @@ def h5py_to_binary(ops):
                 # keep track of the plane identity of the first frame (channel identity is assumed always 0)
                 ncp = nplanes * nchannels
                 nbatch = ncp * math.ceil(ops1[0]["batch_size"] / ncp)
-                nframes_all = f[key].shape[
-                    0] if hdims == 3 else f[key].shape[0] * f[key].shape[1]
+                nframes_all = (
+                    f[key].shape[0] if hdims == 3 else f[key].shape[0] * f[key].shape[1]
+                )
                 nbatch = min(nbatch, nframes_all)
                 nfunc = ops["functional_chan"] - 1 if nchannels > 1 else 0
                 # loop over all tiffs
@@ -74,8 +79,8 @@ def h5py_to_binary(ops):
                         im = f[key][irange, :, :]
                     else:
                         irange = np.arange(
-                            ik / ncp, min(ik / ncp + nbatch / ncp, nframes_all / ncp),
-                            1)
+                            ik / ncp, min(ik / ncp + nbatch / ncp, nframes_all / ncp), 1
+                        )
                         if irange.size == 0:
                             break
                         im = f[key][irange, ...]
@@ -88,25 +93,28 @@ def h5py_to_binary(ops):
                         im = im / 2
                     for j in range(0, nplanes):
                         if iall == 0:
-                            ops1[j]["meanImg"] = np.zeros((im.shape[1], im.shape[2]),
-                                                          np.float32)
+                            ops1[j]["meanImg"] = np.zeros(
+                                (im.shape[1], im.shape[2]), np.float32
+                            )
                             if nchannels > 1:
                                 ops1[j]["meanImg_chan2"] = np.zeros(
-                                    (im.shape[1], im.shape[2]), np.float32)
+                                    (im.shape[1], im.shape[2]), np.float32
+                                )
                             ops1[j]["nframes"] = 0
                         i0 = nchannels * ((j) % nplanes)
-                        im2write = im[np.arange(int(i0) +
-                                                nfunc, nframes, ncp), :, :].astype(
-                                                    np.int16)
+                        im2write = im[
+                            np.arange(int(i0) + nfunc, nframes, ncp), :, :
+                        ].astype(np.int16)
                         reg_file[j].write(bytearray(im2write))
                         ops1[j]["meanImg"] += im2write.astype(np.float32).sum(axis=0)
                         if nchannels > 1:
-                            im2write = im[np.arange(int(i0) + 1 -
-                                                    nfunc, nframes, ncp), :, :].astype(
-                                                        np.int16)
+                            im2write = im[
+                                np.arange(int(i0) + 1 - nfunc, nframes, ncp), :, :
+                            ].astype(np.int16)
                             reg_file_chan2[j].write(bytearray(im2write))
-                            ops1[j]["meanImg_chan2"] += im2write.astype(
-                                np.float32).sum(axis=0)
+                            ops1[j]["meanImg_chan2"] += im2write.astype(np.float32).sum(
+                                axis=0
+                            )
                         ops1[j]["nframes"] += im2write.shape[0]
                         ops1[j]["nframes_per_folder"][ih5] += im2write.shape[0]
                     ik += nframes
