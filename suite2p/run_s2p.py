@@ -113,6 +113,12 @@ def pipeline(
         print(f"NOTE: applying default {str(user_classfile)}")
         classfile = user_classfile
 
+    # add enhanced mean image
+    meanImgE = registration.compute_enhanced_mean_image(
+        ops["meanImg"].astype(np.float32), ops
+    )
+    ops["meanImgE"] = meanImgE
+
     if run_registration:
         raw = f_raw is not None
         # if already shifted by bidiphase, do not shift again
@@ -140,11 +146,6 @@ def pipeline(
         )
 
         ops = registration.save_registration_outputs_to_ops(registration_outputs, ops)
-        # add enhanced mean image
-        meanImgE = registration.compute_enhanced_mean_image(
-            ops["meanImg"].astype(np.float32), ops
-        )
-        ops["meanImgE"] = meanImgE
 
         if ops.get("ops_path"):
             np.save(ops["ops_path"], ops)
